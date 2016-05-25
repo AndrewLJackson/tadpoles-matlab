@@ -1,0 +1,247 @@
+function [clickcount, t, mov] = GUIshoal2dv5_5(n,Nhet,Target,Density,Isolate,mov) %CHANGED 12/11/2004 
+% input variables
+% n = number of tadpoles
+% Nhet = number of heterogeneous targets - these will be drawn red
+%   (currently)
+% Target = 0 if target is one of the homogeneous tadpoles, 
+%   and = 1 if its one of the heterogeneous tadpoles
+% Density = the compaction of the prey
+% Isolate = 0 if group is coherent 
+%   and 1 if the target prey is isolated from the group
+clear C V uu vv %CHANGED 12/11/2004
+global xy C GotOne clickcount trial trials t custom_matrix  preypositionX preypositionY cursorposition focus_prey%these variable are available to all functions in the workspace
+% t added t0o global list 2/11/2004
+ % load custom_cursor_matrix
+
+rand('state',sum(101*clock));randn('state',sum(101*clock));
+warning off %i need to turn the warnings off because of the NaN = ./0 i get for the distance and angle calculations
+%----------------------------------------------------------------------------------------------------
+
+%prime the vectors
+X=zeros(n,1); Y=zeros(n,1); Th=zeros(n,1); R=zeros(n,1); Prefdir=zeros(2,n); tailNaN = repmat(NaN,1,n);
+
+% DEAL WITH HETEROGENEOUS PREY
+het = 1:Nhet;           % the set of heteros
+hom = (Nhet+1):n;        % the set of homos
+
+%-------------------------------------------------------------------------------------
+figure(1)
+set(1,'NextPlot','ReplaceChildren','color',[0.9 0.9 0.9],'position',...
+    [1 31 1024 662], 'DoubleBuffer','on')%POSITION CHANGED 12/11/2004%
+axis ([-20 20 -20 20])
+axis square
+axis on
+box on
+set(gca,'xtick',[],'ytick',[])
+
+%--INITIALISE THE PREY LOCATIONS--
+% see side2side_initialise.m for details on how this is acheived
+% shape = [density] for a circular shoal with given density
+% shape = [density ratio] for a rectangular shoal with given density and length/width RATIO: ratio<1 gives a horiz shoal, ratio>1 a vert shoal
+shape = [Density];
+if Isolate
+    [C,V,pick_side] = Isolated_side2side_initialise(n,shape);
+else
+    [C,V,pick_side] = side2side_initialise(n,shape); % pick_side tells you which side the shoal appeared from... might want to record this for later analysis
+end
+V0 = V;
+
+%---- this bit of code is for drawing the arrow to point at a prey--
+
+if Target 
+    focus_prey = ceil(rand.*Nhet); % pick a hetero prey item at random to follow
+else
+    focus_prey = ceil(rand.*(n-Nhet)); % pick a homo prey item at random to follow
+end
+
+if Isolate
+    focus_prey = 1;
+end
+
+arrowplus = 0.5; % distance the arrow is away from the focus_prey
+arrow = [ C(:,focus_prey)' + arrowplus.*V(:,focus_prey)', - V(:,focus_prey)'];
+
+%these are the tails for the tadpoles
+uu = [C(1,:);C(1,:)-V(1,:); tailNaN];
+vv = [C(2,:);C(2,:)-V(2,:); tailNaN];
+%set up the initial plot
+plothom = plot(C(1,hom),C(2,hom),'o','markersize',5,'markeredgecolor',[0 0 0.0],'markerfacecolor',[0 0 0.0],'visible','off'); %plots the dots
+hold on
+plothet = plot(C(1,het),C(2,het),'o','markersize',5,'markeredgecolor',[0 0 0],'markerfacecolor',[0.8 0.8 0.8],'visible','off'); %plots the dots
+h2 = plot(uu(:),vv(:),'k','visible','off'); %plots the tails
+h3 = quiver('v6',arrow(1),arrow(2),arrow(3),arrow(4),3,'r');  % this plots the arrow to point to a particular prey item, change the number before 'r' to adjust the length of the arrows
+set(h3,'linewidth',1.5,'visible','off') % sets the linewidth of the arrows
+hold off
+h = [plothom h2];
+
+%removes figure cursor from vision
+peeyy = zeros(16,16) .* NaN;
+set(1,'Pointer','custom','PointerShapeCData',peeyy);
+hold on
+pp = plot(0,0,'ko');
+set(pp,'MarkerSize',11)
+hold off
+
+axis ([-20 20 -20 20])
+axis square
+axis on
+box on
+set(gca,'xtick',[],'ytick',[])
+
+%-- this is the count down text
+txtcntdwn = [];
+ylim_tad = YLim;
+txt1 = text(-0.75,(ylim_tad(2) .* 0.1),num2str(txtcntdwn));
+for i = 3:-1:0 % this is the value you change to give a longer or shorter countdown
+    pause(1)
+    txtcntdwn = i;
+    set(txt1,'string',[num2str(txtcntdwn)],'fontsize',[30],'fontweight','bold');
+    %drawnow
+end
+set(txt1,'string',num2str([]));
+
+%----
+%make the dots and tails visible again
+set(plothom,'visible','on')
+set(plothet,'visible','on')
+set(h2,'visible','on')
+
+%--THIS SECTION IS FOR THE CURSOR SHAPE, POSITION AND VISIBILITY--
+%reshow the cursor
+preypositionX = []; preypositionY=[]; cursorposition=[]; %empty matrices for use in testcheckclick
+
+set(1,'Pointer','custom','PointerShapeCData',custom_matrix,...
+         'PointerShapeHotSpot',[9 9], 'WindowButtonDownFcn','testcheckclick_5;')
+set(pp, 'Visible', 'off')
+set(h3,'Visible','off') % turn on the arrow pointing at the focal prey item
+
+%place the cursor at the centre of the screen
+set(gca,'units','pixels')
+axpos = get(gca,'position');
+adjust = get(gcf,'position');
+centrepos = [ (axpos(1)+(axpos(3)./2)) + 2 , (axpos(2)+(axpos(4)./2)+adjust(2)) - 2 ]; %the minuses and pluses in here are adjustment for a jumping cursor on presentation of the taddies. 
+set(0,'PointerLocation',centrepos)
+set(1,'NextPlot','ReplaceChildren', 'DoubleBuffer','on')
+%--END OF CURSOR SETTINGS--
+
+%--DEFINE SOME INPUTS FOR THE ANIMATION FUNCTION (NB THERE IS CHOICE HERE.. BURST.M OR SIDE2SIDE.M)--
+% settings for burst.m
+state = 'init'; %use this to initiliase the movement rules in burst.m
+
+% settings for side2side.m
+wiggle = 0.05; % determines the amount of wiggle for the tadpoles
+
+%--END OF ANIMATION FUNCTION SETTINGS
+
+% set(1,'NextPlot','ReplaceChildren','color',[0.9 0.9 0.9],'position',...
+%     [1 31 1024 662], 'DoubleBuffer','on')%POSITION CHANGED 12/11/2004%
+axis ([-20 20 -20 20])
+axis square
+axis on
+box on
+set(gca,'xtick',[],'ytick',[])
+
+elap_tim_3 = 0;
+teeh = timer('StartDelay',(0.02-elap_tim_3),'TimerFcn','drawnow');%timer object
+
+% The simulation as such Begins Here
+trial = 1; GotOne = 0; clickcount=0; arrow_counter = 0;
+tic;
+
+while GotOne==0 & any(all(abs(C)<25));
+    
+    %the function that determines the movement rules can be changed
+    
+    % [newC,newV] = couzin(C,V,n,Rr,Ro,Ra,v,dtheta,sigma,aa); %this is the self organising animation
+    % [newC,newV,state] = burst(C,V,state); %this is the simple star-burst
+    % animation
+
+    [newC,newV] = side2side(C,V,V0,wiggle);
+
+    C = newC;
+    V = newV;
+        
+    %--draw and cursor check
+    xc=mean(C(1,:));
+    yc=mean(C(2,:));
+    
+	%generate the tails in a vector
+	uu = reshape([C(1,:);C(1,:)-V(1,:); tailNaN],1,size(C,2).*3);
+	vv = reshape([C(2,:);C(2,:)-V(2,:); tailNaN],1,size(C,2).*3);
+
+	set(plothom,'xdata',C(1,hom),'ydata',C(2,hom))
+    set(plothet,'xdata',C(1,het),'ydata',C(2,het))
+	set(h2,'xdata',uu,'ydata',vv)
+    
+    if arrow_counter < 10 & all(abs(C(:,focus_prey))<20) % change the number of frames the arrow lasts here
+        arrow = [ C(:,focus_prey)' + arrowplus.*V(:,focus_prey)', - V(:,focus_prey)'];
+      %  --update the positions of the arrows--
+        [arru arrv arrhu arrhv] = newarrow3(arrow(1),arrow(2),arrow(3),arrow(4));
+
+        set(h3(1),'xdata',arru,'ydata',arrv,'visible','on');
+        set(h3(2),'xdata',arrhu,'ydata',arrhv,'visible','on');
+        arrow_counter = arrow_counter + 1;
+    elseif  arrow_counter == 10
+        set(h3,'visible','off')
+    end
+	
+    %--------------------------------------------------------------
+    %the animation can be paused here for a given duration of time
+    %ideally we want a timer in here but i cant find one for this version of matlab
+    elap_tim_2 = clock;
+    if trial>1
+        elap_tim_3 = etime( elap_tim_2, elap_tim_1 );
+        if elap_tim_3 > 0.02
+            %error('computer is too slow for this carry on')
+        end
+        
+        start(teeh)
+        wait(teeh)
+        
+	end
+    
+    elap_tim_1 = clock;
+    
+    %---------------------------------------------------------------
+    
+    %--update current cursor location
+    cp = get(gca,'CurrentPoint');
+    xy = cp(1,1:2);        
+
+    trial = trial + 1;
+    
+    % *******************************
+    % MOVIE CODE
+%     F = getframe(gca);
+%     mov = addframe(mov,F);
+    % *******************************
+
+end
+
+toc
+if GotOne == 0
+	ht=text(0,0,({['\fontsize{36}No Hits']}),'color','r','horizontalalignment','center'); %changed 12/11/2004
+    pause(1)    %AJ - again pause for a second to display "no hits"
+    t=0; %added because of practice runs which always give a value for the first run
+end
+
+set(1, 'WindowButtonDownFcn','null;')% i guess this gets rid of the problem below by calling a callback function (that does nothing) when the pertinent loop is over.
+
+%it may be useful to add a term here to switch off the testcheckclick
+%callback mouseclick function as this seems to cause erroneous behaviour
+%outwith the pertinent loop.  perhaps add an alternative callback function
+%that does little.
+
+cla % CLEAR THE CURRENT AXIS OF ANY VISIBLE CHILDREN
+
+mov = 0;
+
+
+% if t
+%     t = t;
+% else
+%     t = 0;
+% end
+
+%END OF PROGRAM
+

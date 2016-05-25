@@ -1,0 +1,10 @@
+% wriggle by degrees
+
+wiggle = 0.05;
+
+n = 1;
+
+for i = 1:n
+    newV = unitvector(wiggle.*randn(2,n));
+    theta = atan2(newV(2),new)
+

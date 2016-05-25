@@ -1,0 +1,496 @@
+function varargout = GUIMAIN_3(varargin)
+% GUIMAIN_3 M-file for GUIMAIN_3.fig
+%      GUIMAIN_3, by itself, creates a new GUIMAIN_3 or raises the existing
+%      singleton*.
+%
+%      H = GUIMAIN_3 returns the handle to a new GUIMAIN_3 or the handle to
+%      the existing singleton*.
+%
+%      GUIMAIN_3('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in GUIMAIN_3.M with the given input arguments.
+%
+%      GUIMAIN_3('Property','Value',...) creates a new GUIMAIN_3 or raises the
+%      existing singleton*.  Starting from the left, property value pairs are
+%      applied to the GUI before GUIMAIN_3_OpeningFunction gets called.  An
+%      unrecognized property name or invalid value makes property application
+%      stop.  All inputs are passed to GUIMAIN_3_OpeningFcn via varargin.
+%
+%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
+%      instance to run (singleton)".
+%
+% See also: GUIDE, GUIDATA, GUIHANDLES
+%
+% Edit the above text to modify the response to help GUIMAIN_3
+%
+% Last Modified by GUIDE v2.5 17-Nov-2004 19:17:13
+%
+% Begin initialization code - DO NOT EDIT
+%
+% NOTES FOR GRAEME - added by Andrew Jackson 21-June-2006
+% search for the text "GRAEME LOOK HERE" in this file to be pointed to the
+% important sections
+
+global stan_tad_mat % AJ CHECK TO SEE IF THIS NEEDS TO BE GLOBAL HERE - ALSO GLOBAL IN SUB-FUNCTION BELOW
+gui_Singleton = 1;
+gui_State = struct('gui_Name',       mfilename, ...
+                   'gui_Singleton',  gui_Singleton, ...
+                   'gui_OpeningFcn', @GUIMAIN_3_OpeningFcn, ...
+                   'gui_OutputFcn',  @GUIMAIN_3_OutputFcn, ...
+                   'gui_LayoutFcn',  [] , ...
+                   'gui_Callback',   []);
+if nargin & isstr(varargin{1})
+    gui_State.gui_Callback = str2func(varargin{1});
+end
+
+if nargout
+    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+else
+    gui_mainfcn(gui_State, varargin{:});
+end
+% End initialization code - DO NOT EDIT
+
+
+% --- Executes just before GUIMAIN_3 is made visible.
+function GUIMAIN_3_OpeningFcn(hObject, eventdata, handles, varargin)
+% This function has no output args, see OutputFcn.
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% varargin   command line arguments to GUIMAIN_3 (see VARARGIN)
+
+% Choose default command line output for GUIMAIN_3
+handles.output = hObject;
+
+% Update handles structure
+guidata(hObject, handles);
+
+% UIWAIT makes GUIMAIN_3 wait for user response (see UIRESUME)
+% uiwait(handles.figure1);
+
+
+% --- Outputs from this function are returned to the command line.
+function varargout = GUIMAIN_3_OutputFcn(hObject, eventdata, handles)
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get default command line output from handles structure
+varargout{1} = handles.output;
+
+
+% --- Executes on button press in pushbutton1.
+function pushbutton1_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global age sex hour minute month day user_number first_row preypositionX preypositionY cursorposition ayyy_1t focus_prey stan_tad_mat  
+
+rand_mat_tad(1,:) = randperm(3); %3 is the number of different simulation types, a particular one run at random when a user logs on.
+%sim_no = rand_mat_tad(1);
+sim_no = 3;
+
+gui_close_cntr = 1;
+c_a_ctr_1 = 1;% these relate to the positional cell array saved.
+c_a_ctr_2 = 4;% 
+load burst_data_matrix_2%may need to change 
+load position_cell_array
+
+% GRAEME LOOK HERE
+% AJ notes - As far as i can remember and gather from looking at the code
+% again... sim_no always = 3, so you can disregard the other if statements.
+% Not sure what colin was intending with them, but i think they were
+% designed to keep track of the training session should one have been
+% interested.
+
+if sim_no == 1 %this is the 'unif random training' testing regime.%at present, the number of presentations in sim_no 1, 2 and 3 should be the same to maintain data structure.
+    
+    for temp_new_tre = 1:45 %45 here because we 45 individuals runs 
+    
+        sub_choice_perm(temp_new_tre) = ceil(rand .* 100); %100 is here becuase provisionally we are going for a range of numbers of tadpoles between 1 and 100.
+        no_tad_subp = sub_choice_perm; 
+    
+    end
+    
+    for sim_no_tad_cntr = no_tad_subp
+        
+        train_test = 1;
+    
+        n = sim_no_tad_cntr;
+        
+        %dbstop in burst
+        
+        %calling the function
+        
+        [clickcount, t] = GUIshoal2dv5_4(n);
+        
+        %writing data to data matrix
+       
+        burst_data_matrix_2(first_row, :) = [user_number sex age hour minute month day sim_no train_test n clickcount t];
+        
+        position_cell_array(user_number, c_a_ctr_1:c_a_ctr_2) = {preypositionX preypositionY cursorposition focus_prey};
+        
+        c_a_ctr_1 = c_a_ctr_1 + 4;% 3 is the number of position properties meaured
+        c_a_ctr_2 = c_a_ctr_2 + 4;% 3 is the number of position properties meaured
+        
+        %ensures if no object is hit, time  = 0
+        
+%         if gui_close_cntr > 1
+%         
+%             if ismember(burst_data_matrix(first_row, 12), burst_data_matrix(((user_number .* 60) - 60) + 1 : first_row - 1, 12))
+%                   
+%                    burst_data_matrix(first_row, 12) = 0;
+%                    
+%             end
+%         
+%         end
+ 
+        first_row = first_row + 1;
+       
+       %add write to matrix statement here
+        
+       %close the second gui 
+       
+       if gui_close_cntr == 1
+        
+            close GUIMAIN_3
+        
+        end
+        
+        gui_close_cntr = gui_close_cntr + 1;
+        
+        %clear xy C GotOne clickcount trial trials t 
+        
+        %close all
+        
+    end
+    
+    %the 'standard' test presentations
+    
+    stan_tad_mat = [1 5 10 15 20 25 30 35 40 50 60 70 80 90 100]; %the numbers of tads you want presented as standard 
+    randperm_tad_1 = randperm(15);
+    
+    for standard_tad_ctr = randperm_tad_1 %change if more standard presentations are made.
+        
+        train_test = 2;
+        
+        n = stan_tad_mat(standard_tad_ctr);
+        
+        [clickcount, t] = GUIshoal2dv5_4(n);
+        
+        burst_data_matrix_2(first_row, :) = [user_number sex age hour minute month day sim_no train_test n clickcount t];
+        
+        position_cell_array(user_number, c_a_ctr_1:c_a_ctr_2) = {preypositionX preypositionY cursorposition focus_prey};
+        
+        c_a_ctr_1 = c_a_ctr_1 + 4;% 3 is the number of position properties meaured
+        c_a_ctr_2 = c_a_ctr_2 + 4;% 3 is the number of position properties meaured
+        
+%         if ismember(burst_data_matrix(first_row, 12), burst_data_matrix(((user_number .* 60) - 60) + 1 : first_row - 1, 12))
+%               
+%                burst_data_matrix(first_row, 12) = 0;
+%                
+%         end
+        
+        first_row = first_row + 1;
+        
+        %add write to matrix statement here
+        
+    end
+
+	save burst_data_matrix_2 burst_data_matrix_2 
+	
+    %adding a screen that shows the simulation has finished
+    
+	h1_tad = plot(1,1,'o','markersize',5,'markeredgecolor',[0 0 0.0],'markerfacecolor',[0 0 0.0],'visible','off'); 
+	axis ([-20 20 -20 20])
+	axis square
+	axis on
+	box on
+	set(gca,'xtick',[],'ytick',[])
+	ht=text(0,0,({['\fontsize{30}The simulation is now finished.']; ['Your user profile is being calculated.']}),'color','r','horizontalalignment','center');
+    pause(3)
+    
+elseif sim_no == 2 %this is the 'normal random training' testing regime.%at present, the number of presentations in sim_no 1, 2 and 3 should be the same to maintain data structure.
+    
+    yeyyye = (randn(1,45) + 4) ./ 8; %45 individual runs
+    sub_choice_perm = ceil(yeyyye .* 100); %100 is here becuase provisionally we are going for a range of numbers of tadpoles between 1 and 100.
+    no_tad_subp = sub_choice_perm;
+    
+    for sim_no_tad_cntr = no_tad_subp
+        
+        train_test = 1;
+    
+        n = sim_no_tad_cntr;
+        
+        %dbstop in burst
+        
+        [clickcount, t] = GUIshoal2dv5_4(n);
+       
+        burst_data_matrix_2(first_row, :) = [user_number sex age hour minute month day sim_no train_test n clickcount t];
+        
+        position_cell_array(user_number, c_a_ctr_1:c_a_ctr_2) = {preypositionX preypositionY cursorposition focus_prey};
+        
+        c_a_ctr_1 = c_a_ctr_1 + 4;% 3 is the number of position properties meaured
+        c_a_ctr_2 = c_a_ctr_2 + 4;% 3 is the number of position properties meaured
+        
+%         if gui_close_cntr > 1
+%         
+%             if ismember(burst_data_matrix(first_row, 12), burst_data_matrix(((user_number .* 60) - 60) + 1 : first_row - 1, 12))
+%                   
+%                    burst_data_matrix(first_row, 12) = 0;
+%                    
+%             end
+%         
+%         end
+ 
+        first_row = first_row + 1;
+       
+       %add write to matrix statement here
+        
+        if gui_close_cntr == 1
+        
+            close GUIMAIN_3
+        
+        end
+        
+        gui_close_cntr = gui_close_cntr + 1;
+        
+        %clear xy C GotOne clickcount trial trials t 
+        
+        %close all
+        
+    end
+    
+    stan_tad_mat = [1 5 10 15 20 25 30 35 40 50 60 70 80 90 100]; %the numbers of tads you want presented as standard 
+    randperm_tad_1 = randperm(15);
+    
+    for standard_tad_ctr = randperm_tad_1 %change if more standard presentations are made.
+        
+        train_test = 2;
+        
+        n = stan_tad_mat(standard_tad_ctr);
+        
+        [clickcount, t] = GUIshoal2dv5_4(n);
+        
+        burst_data_matrix_2(first_row, :) = [user_number sex age hour minute month day sim_no train_test n clickcount t];
+        
+        position_cell_array(user_number, c_a_ctr_1:c_a_ctr_2) = {preypositionX preypositionY cursorposition focus_prey};
+        
+        c_a_ctr_1 = c_a_ctr_1 + 4;% 3 is the number of position properties meaured
+        c_a_ctr_2 = c_a_ctr_2 + 4;% 3 is the number of position properties meaured
+        
+%         if ismember(burst_data_matrix(first_row, 12), burst_data_matrix(((user_number .* 60) - 60) + 1 : first_row - 1, 12))
+%               
+%                burst_data_matrix(first_row, 12) = 0;
+%                
+%         end
+        
+        first_row = first_row + 1;
+        
+        %add write to matrix statement here
+        
+    end
+
+	save burst_data_matrix_2 burst_data_matrix_2 
+	
+	h1_tad = plot(1,1,'o','markersize',5,'markeredgecolor',[0 0 0.0],'markerfacecolor',[0 0 0.0],'visible','off'); 
+	axis ([-20 20 -20 20])
+	axis square
+	axis on
+	box on
+	set(gca,'xtick',[],'ytick',[])
+	ht=text(0,0,({['\fontsize{30}The simulation is now finished.']; ['Your user profile is being calculated.']}),'color','r','horizontalalignment','center');
+    pause(3)
+    
+elseif sim_no == 3 %at present, the number of presentations in sim_no 1, 2 and 3 should be the same to maintain data structure.
+    % AJ - MUCH HAS CHANGED HERE.
+    % GRAEME LOOK HERE
+    
+    stan_tad_mat = [1 5 10 15 20 25 30 35 40 50 60 70 80 90 100]; %the numbers of tads you want presented as standard 
+    
+    % the trial characteristics you want to run  ARE DEFINED HERE (all grp sizes for each trial)
+    allDensities =  [1 1  0.5  1  1 ];
+    allNhet =       [1 0  0    0 -1 ]; % 1 codes for a single hetero prey, 0 for zero and -1 codes for 50%
+    allIsolate =    [0 0  0    1  0 ];
+    allTarget =     [1 0  0    0  0 ];
+    
+    % THIS CODE GENERATES ALL SCREENS IN A COMBINATORIAL MANNER I.E. ALL
+    % POSSIBLE COMBINATOINS ARE GENERATED HERE, AND RANDOMISED LATER
+    n_trials = length(allDensities);
+%     randperm_tad_1 = randperm(length(stan_tad_mat));
+    ct = 0;
+    for i = 1:n_trials
+        for j = 1:length(stan_tad_mat)
+            ct = ct + 1;
+            if allNhet(i)==-1
+                input_variables(ct,:) =  [stan_tad_mat(j), allDensities(i), floor(stan_tad_mat(j)./2), allIsolate(i), allTarget(i)];
+            else
+                input_variables(ct,:) =  [stan_tad_mat(j), allDensities(i), allNhet(i), allIsolate(i), allTarget(i)];
+            end
+        end
+    end
+    
+    % THIS IS WHAT RANDOMISES THE ORDER IN WHICH THE SCREENS ARE PRESENTED
+    randperm_tad_1 = randperm(length(input_variables));
+    
+    % *******************************
+    % MOVIE CODE
+    mov = avifile(['example.avi']);
+    % *******************************
+    
+    for j = randperm_tad_1 %change if more standard presentations are made.
+        
+        train_test = 2;
+        
+        n = input_variables(j,1);
+        Density = input_variables(j,2);
+        Nhet = input_variables(j,3);
+        Isolate = input_variables(j,4);
+        Target = input_variables(j,5);
+        
+
+%         [clickcount, t, mov] = GUIshoal2dv5_5(n,Nhet,Target,Density,Isolate,mov);
+        [clickcount, t, mov] = GUIshoal2dv5_5(40,1,1,1,0,mov);
+
+        
+        burst_data_matrix_2(first_row, :) = [user_number sex age hour minute month day sim_no train_test n clickcount t Nhet Target Density Isolate];
+        
+        position_cell_array(user_number, c_a_ctr_1:c_a_ctr_2) = {preypositionX preypositionY cursorposition focus_prey};
+    
+        c_a_ctr_1 = c_a_ctr_1 + 4;% 3 is the number of position properties meaured
+        c_a_ctr_2 = c_a_ctr_2 + 4;% 3 is the number of position properties meaured
+        
+%             if gui_close_cntr > 1
+%             
+%                 if ismember(burst_data_matrix(first_row, 12), burst_data_matrix(((user_number .* 60) - 60) + 1 : first_row - 1, 12))
+%                       
+%                        burst_data_matrix(first_row, 12) = 0;
+%                        
+%                 end
+%             
+%             end
+        
+        first_row = first_row + 1;
+        
+        if gui_close_cntr == 1
+    
+            close GUIMAIN_3
+    
+        end
+        
+        gui_close_cntr = gui_close_cntr + 1;
+        
+    end
+    
+    % *******************************
+    % MOVIE CODE
+    mov = close(mov);
+    % *******************************
+
+    
+    save burst_data_matrix_2 burst_data_matrix_2 
+	
+	h1_tad = plot(1,1,'o','markersize',5,'markeredgecolor',[0 0 0.0],'markerfacecolor',[0 0 0.0],'visible','off'); 
+	axis ([-20 20 -20 20])
+	axis square
+	axis on
+	box on
+	set(gca,'xtick',[],'ytick',[])
+	ht=text(0,0,({['\fontsize{25}The simulation is now finished.']; ['Thanks for taking part.']; ['Goodbye.']}),'color','r','horizontalalignment','center');
+    pause(3)
+    
+end
+
+%user_input = 2;
+% %user feedback
+% 
+% %user_number = 6;
+% if user_number == 1
+%     
+%     [prev_user_1_5_2, prev_user_6_10_2, prev_user_11_15_2, prev_user_16_20_2] = for_feedback_funct_2;
+%     
+%     ayyy_1t = guidata(GUIMAIN_5);
+%     set(ayyy_1t.text10,'string', [num2str(prev_user_1_5_2), '%']); 
+%  	set(ayyy_1t.text11,'string', [num2str(prev_user_6_10_2), '%']); 
+%  	set(ayyy_1t.text12,'string', [num2str(prev_user_11_15_2), '%']);
+%  	set(ayyy_1t.text13,'string', [num2str(prev_user_16_20_2), '%']); 
+%     
+%     pause(0.1)
+%     close 1
+%         
+% else
+% 
+% 	[prev_user_1_5, prev_user_6_10, prev_user_11_15, prev_user_16_20, prev_user_1_5_2, prev_user_6_10_2, prev_user_11_15_2, prev_user_16_20_2] = for_feedback_funct;  
+% 	
+% 	par_tad_1(1) = prev_user_1_5_2 - prev_user_1_5;
+% 	par_tad_1(2) = prev_user_6_10_2 - prev_user_6_10;
+% 	par_tad_1(3) = prev_user_11_15_2 - prev_user_11_15;
+% 	par_tad_1(4) = prev_user_16_20_2 - prev_user_16_20;
+% 	
+% 	par_tad_2 = sum(par_tad_1);
+% 	
+% 	ayyy_1t = guidata(GUIMAIN_4);
+% 	set(ayyy_1t.text9,'string', [num2str(prev_user_1_5_2), '%']); 
+% 	set(ayyy_1t.text11,'string', [num2str(prev_user_6_10_2), '%']); 
+% 	set(ayyy_1t.text13,'string', [num2str(prev_user_11_15_2), '%']);
+% 	set(ayyy_1t.text15,'string', [num2str(prev_user_16_20_2), '%']); 
+% 	set(ayyy_1t.text10,'string', [num2str(prev_user_1_5), '%']); 
+% 	set(ayyy_1t.text12,'string', [num2str(prev_user_6_10), '%']);
+% 	set(ayyy_1t.text14,'string', [num2str(prev_user_11_15), '%']); 
+% 	set(ayyy_1t.text16,'string', [num2str(prev_user_16_20), '%']);
+% 	
+% 	%par_tad_2 = 15;
+% 	
+% 	if par_tad_2 > 20
+%         
+%         set(ayyy_1t.text17,'string', 'Wow...you''re cooking with gas!');
+% 	
+% 	elseif par_tad_2 <= 20 && par_tad_2 > 10
+%         
+%         set(ayyy_1t.text17,'string', 'You''re pretty good; you could do this for a living!');
+% 	
+% 	elseif par_tad_2 <= 10 && par_tad_2 > 0
+%         
+%         set(ayyy_1t.text17,'string', 'Not too bad...maybe more coffee needed!');
+% 	
+% 	elseif par_tad_2 <= 0 && par_tad_2 > -10
+%         
+%         set(ayyy_1t.text17,'string', 'Below par.  Keep your mind on the job!');
+% 	
+% 	elseif par_tad_2 <= -10 && par_tad_2 > -20
+%         
+%         set(ayyy_1t.text17,'string', 'Hummm...I''ve seen better.  Are you ashamed?');
+% 	
+% 	elseif par_tad_2 <= -20 
+%         
+%         set(ayyy_1t.text17,'string', 'Errr...did you sleep through it?');
+% 	
+% 	end
+%     
+%     pause(0.1)
+%     close 1
+% 
+% end
+
+% GUIMAIN_6
+% pause(0.1)
+%     
+% if user_number == 1
+% 
+%     close GUIMAIN_5
+%     
+% else
+%     
+%     close GUIMAIN_4
+%     
+% end
+
+user_number = user_number + 1;
+save user_number user_number;
+save position_cell_array position_cell_array;
+
+clear all
+    
+
+

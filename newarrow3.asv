@@ -1,0 +1,24 @@
+function [arruu, arrvv, arrhu, arrhv] = newarrow3(x,y,u,v)
+
+%ive stolen all this coded from quiver.m - AJ
+% essentially it does the same but just doesnt plot the results
+% this then gets passed out for replotting in the main code
+
+% Arrow head parameters
+%
+alpha = 0.3; % Size of arrow head relative to the length of the vector
+beta = 0.5;  % Width of the base of the arrow head relative to the length
+tail = 5;    % relative length of the tail to unitvector
+
+% Make velocity vectors
+x = x(:).'; y = y(:).';
+u = tail.*u(:).'; v = tail.*v(:).';
+arruu = [x;x-u;repmat(NaN,size(u))];
+arrvv = [y;y-v;repmat(NaN,size(u))];
+
+
+% Make arrow heads and plot them
+arrhu = [x-alpha*(u+beta*(v+eps));x; ...
+    x-alpha*(u-beta*(v+eps));repmat(NaN,size(u))];
+arrhv = [y-alpha*(v-beta*(u+eps));y; ...
+    y-alpha*(v+beta*(u+eps));repmat(NaN,size(v))];

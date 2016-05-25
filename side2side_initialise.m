@@ -1,0 +1,72 @@
+function [C,V,pick_side] = side2side_initialise(n,shape)
+
+%this function starts the agents either to the left, right, top or bottom of the screen and then moves them straight across the screen
+% their shape is defined by the vector SHAPE which has variable number of arguments
+%   if shape = [dens] then a circlular group is drawn with density = dens .. ie this controls compaction
+%       NB density is given by number of prey per unit area
+%   if shape = [dens ratio] then a rectangular group is drawn with density = dens and a length/width ratio = ratio
+%       i.e.    if ratio = 1 then its a square
+%               if ratio < 1 then its horizontally orientated
+%               if ratio > 1 then its vertically orientated
+% This function needs to be called in conjunction with side2side.m which will animate the shoal
+% I.e. call this first and then inside the animation loop call side2side.m
+% wiggle determines the amoung of wiggle in the swim.
+% The side from which the shoal appears is given by the output variable 'pick_side'.
+%   pick_side = {1 2 3 4} = from the {left, right, bottom, top} respectively
+
+% get the axis limits... these are currently [-20 20 -20 20]
+axlims = axis;
+
+C = zeros(2,n);
+V = C;
+
+pick_side = ceil(rand.*4); % choose a side start the shoal from 
+
+if length(shape) == 1 % circular group
+       
+    r = sqrt(n./(pi.*shape)); % radius of the group with given density
+    for i = 1:n
+        while 1
+            C(:,i) = -r + (r+r).*rand(2,1);
+            rrsq = sum(C(:,i).^2);
+            if rrsq<=r.^2; break; end
+        end    
+    end
+    
+    if pick_side < 3
+        C(1,:) = C(1,:) + sign(axlims(pick_side)).*(r+1) + (axlims(pick_side));
+        C(2,:) = C(2,:) + axlims(1) - 1 + r + (2.*axlims(2)-2-(2.*r)).*rand;
+        V = unitvector([ -ones(1,n).*sign(axlims(pick_side)) ; zeros(1,n) ]) ;
+    else
+        C(2,:) = C(2,:) + sign(axlims(pick_side)).*(r+1) + (axlims(pick_side));
+        C(1,:) = C(1,:) + axlims(3) - 1 + r + (2.*axlims(4)-2-(2.*r)).*rand;
+        V = unitvector([ zeros(1,n) ; -ones(1,n).*sign(axlims(pick_side)) ]) ;
+    end
+    
+else
+    dens = shape(1);
+    ratio = shape(2);
+    tmp = n./(dens.*ratio);
+    y = sqrt(tmp);
+    x = ratio.*y;
+    
+    if y > diff(axlims([3 4])) | x > diff(axlims([1 2]))
+        warning('The dimensions of the shoal outsize the dimensions of the screen.')
+    end
+    
+    C(1,:) = x.*rand(1,n);
+    C(2,:) = y.*rand(1,n);
+    
+    if pick_side < 3
+        if pick_side == 1; tmp = x; else; tmp = 0; end
+        C(1,:) = C(1,:) + sign(axlims(pick_side)) + (axlims(pick_side)) - tmp;
+        C(2,:) = C(2,:) + axlims(1)+1  + (2.*axlims(2)-2-y).*rand;
+        V = unitvector([ -ones(1,n).*sign(axlims(pick_side)) ; zeros(1,n) ]) ;
+    else
+        if pick_side == 3; tmp = y; else; tmp = 0; end
+        C(2,:) = C(2,:) + sign(axlims(pick_side)) + (axlims(pick_side)) - tmp;
+        C(1,:) = C(1,:) + axlims(3)+1 + (2.*axlims(4)-2-x).*rand;
+        V = unitvector([ zeros(1,n) ; -ones(1,n).*sign(axlims(pick_side)) ]) ;
+    end
+    
+end

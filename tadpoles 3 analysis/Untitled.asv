@@ -1,0 +1,22 @@
+clear all
+
+load burst_data_matrix_aj
+
+data = burst_data_matrix_2;
+clear burst_data_matrix_2
+
+subjects = unique(data(:,1));
+
+nscreens = zeros(numel(subjects),1);
+
+ct = 0;
+for i = subjects
+    
+    sub = data(find(data(:,1)==i),:);
+    
+    nscreens(ct) = numel(sub);
+    
+end
+
+
+[subjects,ns]
